@@ -1,0 +1,85 @@
+/*
+  Localizable.strings
+  GoShortApp
+
+  Creado por Uriel C el 24/11/24.
+  
+*/
+
+/* General Strings */
+"nameApp" = "GoShortApp";
+
+/* Labels */
+"titleLabelFree" = "Gratis";
+"titleLabelPreimum" = "Premium";
+"urlHeaderText" = "Escribe una URL:";
+"urlPlaceholder" = "https://enlace.largo.com";
+"backButtonTitle" = "Regresar";
+"titleCustomURL" = "URL Personalizada";
+"headerLargeURL" = "URL Larga";
+"placeholderLargeURL" = "URL Larga";
+"headerCustomName" = "Nombre Personalizado";
+"placeholderCustomName" = "Nombre Personalizado";
+"headerDomainSelected" = "Dominio Seleccionado";
+"placeholderDomainPicker" = "https://go.short/";
+"placeholderDomainSuffix" = "ruta-personalizada";
+"generateButtonTitle" = "Generar";
+
+/* Buttons */
+"shortenButtonTitle" = "Acortar URL";
+"customButtonTitle" = "URL Personalizada";
+"premiumButtonTitle" = "Vuelvete premium";
+
+/* Segmented Control */
+"segmentedControlShortcuts" = "Atajos";
+"segmentedControlCustomShortcuts" = "Atajos Personalizados";
+
+/* Placeholder Messages */
+"emptyListMessage" = "No tienes atajos todavía.\nAgrega una nueva URL para comenzar.";
+
+/* Toast */
+"toast.enterURL" = "Por favor, ingresa una URL.";
+"toast.textCopied" = "Texto copiado.";
+"toast.urlShortened" = "URL acortada exitosamente: ";
+"toast.invalidURL" = "La URL ingresada no es válida.";
+"toast.shortCutDeleted" = "Atajo eliminado.";
+
+/* Premium */
+"Premium_Title" = "Premium";
+"Premium_Features_Intro" = "Si buscas maximizar el impacto de tus enlaces, mantener el control total sobre ellos y disfrutar de una experiencia sin límites, nuestro plan Premium es perfecto para ti. Diseñado para quienes necesitan más funcionalidades y libertad, este plan te permitirá gestionar tus enlaces de forma eficiente, segura y personalizada, mientras aprovechas ventajas exclusivas que harán tu experiencia mucho más enriquecedora.";
+"Premium_Feature_Limitless_Links" = "• Acorta enlaces sin límites, sin restricciones en la cantidad de URLs.";
+"Premium_Feature_Customize_Links" = "• Personaliza hasta 40 enlaces a tu gusto.";
+"Premium_Feature_Traffic_Stats" = "• Obtén estadísticas detalladas sobre el tráfico de tus enlaces.";
+"Premium_Feature_Secure_Links" = "• Protege tus enlaces con contraseñas seguras.";
+"Premium_Feature_Expiration" = "• Configura una fecha de expiración para tus enlaces.";
+"Premium_Feature_Ad_Free" = "• Disfruta de la app sin anuncios.";
+"Premium_Feature_Priority_Support" = "• Recibe soporte prioritario con atención preferencial.";
+"Premium_Price_Text" = "Solo por ";
+"Premium_Price_Value" = "$100.00 MXN ";
+"Premium_Price_Monthly" = "al mes.";
+"Premium_Subscribe_Button" = "Adquirir premium";
+"Premium_Terms" = "Tu suscripción mensual se renovará automáticamente por el mismo período de tiempo, a menos que la canceles como mínimo 24 horas antes de que termine el período actual. Puedes cancelarla en cualquier momento desde el App Store sin costos adicionales. Tu suscripción terminará al finalizar el período actual.";
+"PremiumLimit.Alert.Title" = "Límite Alcanzado";
+"PremiumLimit.Alert.Message" = "Has alcanzado el límite de 20 URLs creadas. ¡Hazte premium para disfrutar de más beneficios!";
+"PremiumLimit.Alert.BecomePremium" = "Hazte Premium";
+"PremiumLimit.Alert.Cancel" = "Cancelar";
+
+/* Validation Messages */
+"validationInvalidURL" = "La URL ingresada no es válida.";
+"validationEmptyCustomName" = "El campo 'Nombre Personalizado' no puede estar vacío.";
+"validationInvalidDomainSuffix" = "El campo 'Ruta del Dominio' no es válido.";
+
+/* Success Messages */
+"successURLGenerated" = "URL personalizada generada exitosamente.";
+
+/* Textos de la pantalla de inicio */
+"welcome_title" = "Bienvenido a";
+"welcome_subtitle" = "Regístrate o inicia sesión para comenzar a generar tus URLs personalizadas. Utiliza tu cuenta de Apple para un acceso rápido y seguro.";
+"apple_login_error" = "Error al iniciar sesión con Apple:";
+
+/* Textos del perfil */
+"urls_generated" = "URLs generadas";
+"acquire_premium" = "Adquirir Premium";
+"logout" = "Cerrar sesión";
+"premium_status_yes" = "Eres usuario premium.";
+"premium_status_no" = "No eres usuario premium.";
