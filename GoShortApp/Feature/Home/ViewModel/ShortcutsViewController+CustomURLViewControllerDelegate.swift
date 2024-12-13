@@ -9,8 +9,7 @@ extension ShortcutsViewController: CustomURLViewControllerDelegate {
     func didGenerateCustomURL(controller: CustomURLViewController) {
         controller.navigationController?.popViewController(animated: true)
         
-        self.tableView.reloadData()
-        self.updatePlaceholderVisibility()
+        self.fetchURLsFromAPI()
         
         showToast(message: "URL personalizada generada")
     }

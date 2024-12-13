@@ -7,62 +7,48 @@
 
 import UIKit
 
-/// Controlador que gestiona la pantalla de atajos (Shortcuts).
-/// Permite al usuario crear, visualizar y personalizar URLs. Ofrece funcionalidades adicionales si el usuario es premium.
 class ShortcutsViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
 
-    var user: User?
-    /// Indica si el usuario es premium. Los usuarios premium tienen acceso a más funcionalidades.
-    var isPremiumUser = false
+    private var urlList: [URLInfo] = []
+    private var urlCustomList: [URLInfo] = []
     
-    /// Etiqueta de título principal. Muestra el estado (Free o Premium) y el nombre de la app.
-    let titleLabel: UILabel = {
+    var isPremiumUser = false {
+        didSet {
+            
+            let fullText = "\(isPremiumUser ? LocalizableConstants.Labels.titleLabelPreimum : LocalizableConstants.Labels.titleLabelFree) \(LocalizableConstants.General.nameApp)"
+            
+            let boldFont = UIFont.boldSystemFont(ofSize: 18)
+            let regularFont = UIFont.boldSystemFont(ofSize: 24)
+            
+            let attributedText = NSMutableAttributedString(string: fullText)
+            
+            let range = (fullText as NSString).range(of: isPremiumUser ? LocalizableConstants.Labels.titleLabelPreimum : LocalizableConstants.Labels.titleLabelFree)
+             attributedText.addAttributes([
+                 .font: boldFont,
+                 .foregroundColor: UIColor.label
+             ], range: range)
+            
+            let appNameRange = (fullText as NSString).range(of: LocalizableConstants.General.nameApp)
+            if let gradientColor = titleLabel.gradientTextColor(colors: [.systemBlue, .systemPurple], text: LocalizableConstants.General.nameApp, font: regularFont) {
+                attributedText.addAttributes([
+                    .font: regularFont,
+                    .foregroundColor: gradientColor
+                ], range: appNameRange)
+            }
+            
+            titleLabel.attributedText = attributedText
+            
+            
+        }
+    }
+    
+    var titleLabel: UILabel = {
         let label = UILabel()
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
-        
-        // Texto del título basado en el estado del usuario (Free o Premium).
-        var fullText = "\(LocalizableConstants.Labels.titleLabelFree) \(LocalizableConstants.General.nameApp)"
-        if let user = UserManager.shared.getUser() {
-            fullText = "\(user.isPremium ? LocalizableConstants.Labels.titleLabelPreimum : LocalizableConstants.Labels.titleLabelFree) \(LocalizableConstants.General.nameApp)"
-        }
-        
-        // Fuente y atributos
-        let boldFont = UIFont.boldSystemFont(ofSize: 18)
-        let regularFont = UIFont.boldSystemFont(ofSize: 24)
-        
-        // Crear texto estilizado
-        let attributedText = NSMutableAttributedString(string: fullText)
-        
-        // Aplicar negrita a "Free" o "Premium"
-        if let user = UserManager.shared.getUser() {
-            let range = (fullText as NSString).range(of: user.isPremium ? LocalizableConstants.Labels.titleLabelPreimum : LocalizableConstants.Labels.titleLabelFree)
-            attributedText.addAttributes([
-                .font: boldFont,
-                .foregroundColor: UIColor.label
-            ], range: range)
-        } else {
-            let range = (fullText as NSString).range(of: LocalizableConstants.Labels.titleLabelFree)
-            attributedText.addAttributes([
-                .font: boldFont,
-                .foregroundColor: UIColor.black
-            ], range: range)
-        }
-        
-        // Aplicar gradiente al nombre de la app
-        let appNameRange = (fullText as NSString).range(of: LocalizableConstants.General.nameApp)
-        if let gradientColor = label.gradientTextColor(colors: [.systemBlue, .systemPurple], text: LocalizableConstants.General.nameApp, font: regularFont) {
-            attributedText.addAttributes([
-                .font: regularFont,
-                .foregroundColor: gradientColor
-            ], range: appNameRange)
-        }
-        
-        label.attributedText = attributedText
         return label
     }()
     
-    /// Etiqueta que actúa como encabezado para el campo de texto de URL.
     let headerUrlTextField: UILabel = {
         let label = UILabel()
         label.text = LocalizableConstants.Labels.urlHeaderText
@@ -72,7 +58,6 @@ class ShortcutsViewController: UIViewController, UITableViewDataSource, UITableV
         return label
     }()
 
-    /// Campo de texto para que el usuario ingrese una URL.
     let urlTextField: UITextField = {
         let textField = UITextField()
         textField.placeholder = LocalizableConstants.Labels.urlPlaceholder
@@ -82,7 +67,6 @@ class ShortcutsViewController: UIViewController, UITableViewDataSource, UITableV
         return textField
     }()
 
-    /// Botón para acortar una URL ingresada.
     let shortenButton: UIButton = {
         let button = UIButton(type: .system)
         button.backgroundColor = .systemBackground
@@ -91,7 +75,6 @@ class ShortcutsViewController: UIViewController, UITableViewDataSource, UITableV
         button.setTitle(LocalizableConstants.Buttons.shortenButtonTitle, for: .normal)
         button.translatesAutoresizingMaskIntoConstraints = false
 
-        // Configuración de sombra y bordes redondeados.
         button.layer.shadowColor = UIColor.label.cgColor
         button.layer.shadowOpacity = 0.2
         button.layer.shadowOffset = CGSize(width: 0, height: 2)
@@ -102,7 +85,6 @@ class ShortcutsViewController: UIViewController, UITableViewDataSource, UITableV
         return button
     }()
 
-    /// Botón para crear un atajo personalizado (solo disponible para usuarios premium).
     let customButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle(LocalizableConstants.Buttons.customButtonTitle, for: .normal)
@@ -110,7 +92,6 @@ class ShortcutsViewController: UIViewController, UITableViewDataSource, UITableV
         button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 14)
         button.translatesAutoresizingMaskIntoConstraints = false
 
-        // Configuración de sombra, bordes redondeados y fondo.
         button.layer.shadowColor = UIColor.black.cgColor
         button.layer.shadowOpacity = 0.2
         button.layer.shadowOffset = CGSize(width: 0, height: 2)
@@ -121,7 +102,6 @@ class ShortcutsViewController: UIViewController, UITableViewDataSource, UITableV
         return button
     }()
 
-    /// Vista en forma de stack horizontal que contiene los botones `shortenButton` y `customButton`.
     let buttonStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .horizontal
@@ -132,7 +112,6 @@ class ShortcutsViewController: UIViewController, UITableViewDataSource, UITableV
         return stackView
     }()
 
-    /// Control segmentado que permite alternar entre atajos regulares y personalizados.
     let segmentedControl: UISegmentedControl = {
         let segmentedControl = UISegmentedControl(items: [LocalizableConstants.SegmentedControl.shortcuts, LocalizableConstants.SegmentedControl.customShortcuts])
         segmentedControl.selectedSegmentIndex = 0
@@ -140,7 +119,6 @@ class ShortcutsViewController: UIViewController, UITableViewDataSource, UITableV
         return segmentedControl
     }()
 
-    /// Tabla para mostrar la lista de atajos actuales.
     let tableView: UITableView = {
         let tableView = UITableView()
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "ShortcutCell")
@@ -148,7 +126,6 @@ class ShortcutsViewController: UIViewController, UITableViewDataSource, UITableV
         return tableView
     }()
 
-    /// Etiqueta que se muestra cuando la lista de atajos está vacía.
     let emptyPlaceholderLabel: UILabel = {
         let label = UILabel()
         label.text = LocalizableConstants.Placeholders.emptyListMessage
@@ -161,7 +138,6 @@ class ShortcutsViewController: UIViewController, UITableViewDataSource, UITableV
         return label
     }()
 
-    /// Botón para invitar al usuario a convertirse en premium.
     let premiumButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle(LocalizableConstants.Buttons.premiumButtonTitle, for: .normal)
@@ -169,7 +145,6 @@ class ShortcutsViewController: UIViewController, UITableViewDataSource, UITableV
         button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 14)
         button.translatesAutoresizingMaskIntoConstraints = false
 
-        // Configuración de sombra, bordes redondeados y fondo.
         button.layer.shadowColor = UIColor.black.cgColor
         button.layer.shadowOpacity = 0.2
         button.layer.shadowOffset = CGSize(width: 0, height: 2)
@@ -180,10 +155,8 @@ class ShortcutsViewController: UIViewController, UITableViewDataSource, UITableV
         return button
     }()
     
-    /// Botón de perfil con un ícono circular
     let profileButton: UIButton = {
         let button = UIButton(type: .system)
-        // Configuración de la imagen del botón
         button.setImage(UIImage(systemName: "person.crop.circle"), for: .normal)
         button.tintColor = .label // Cambiar color del ícono si es necesario
         button.translatesAutoresizingMaskIntoConstraints = false
@@ -191,31 +164,22 @@ class ShortcutsViewController: UIViewController, UITableViewDataSource, UITableV
         return button
     }()
 
-    /// Lista actual de atajos. Cada vez que se actualiza, se recarga la tabla y se evalúa si mostrar el placeholder.
-    var currentShortcuts: [URLItem] = [] {
+    var currentShortcuts: [URLInfo] = [] {
         didSet {
             self.tableView.reloadData()
             self.updatePlaceholderVisibility()
         }
     }
 
-    // MARK: - Ciclo de Vida
-    /// Configuración inicial de la vista.
     override func viewDidLoad() {
         super.viewDidLoad()
         
         self.view.backgroundColor = .systemBackground
         self.navigationController?.navigationBar.isHidden = true
         
-        if let user = UserManager.shared.getUser() {
-            self.user = user
-            self.isPremiumUser = self.user?.isPremium ?? false
-        } else {
-            self.isPremiumUser = false
-        }
+        self.isPremiumUser = UserDefaultsManager.shared.isPremiumUser()
         
-        currentShortcuts = urlList
-        self.updatePlaceholderVisibility()
+        fetchURLsFromAPI() 
         
         segmentedControl.addTarget(self, action: #selector(segmentedControlChanged(_:)), for: .valueChanged)
         
@@ -247,19 +211,75 @@ class ShortcutsViewController: UIViewController, UITableViewDataSource, UITableV
         setupLayout()
     }
 
-    /// Ajusta el tamaño de los gradientes en los botones personalizados.
-    /// Configura o actualiza el gradiente de fondo en un botón.
-    /// - Parameters:
-    ///   - button: El botón al que se aplicará el gradiente.
-    ///   - colors: Los colores del gradiente.
-    ///   - startPoint: El punto inicial del gradiente (por defecto, horizontal desde la izquierda).
-    ///   - endPoint: El punto final del gradiente (por defecto, horizontal hacia la derecha).
+    func getTotalURLsCount() -> Int {
+        return urlList.count + urlCustomList.count
+    }
+    
+    func fetchURLsFromAPI() {
+        guard let token = UserDefaults.standard.string(forKey: "accessToken") else { return }
+        
+        let urlsEndpoint = APIManager.Endpoint(
+            path: "/urls",
+            method: .GET,
+            parameters: nil,
+            headers: ["Authorization": "Bearer \(token)", "Accept": "application/json"]
+        )
+        
+        DispatchQueue.main.async {
+            self.showLoader()
+        }
+        
+        APIManager.shared.request(endpoint: urlsEndpoint, responseType: URLResponse.self) { [weak self] result in
+            guard let self = self else { return }
+            
+            self.updatePlaceholderVisibility()
+
+            switch result {
+            case .success(let response):
+                if response.success {
+                    self.urlList = response.data.urls.filter { $0.domain == nil }
+                    self.urlCustomList = response.data.urls.filter { $0.domain != nil }
+                    
+                    DispatchQueue.main.async {
+                        self.hideLoader()
+                        self.currentShortcuts = self.urlList.reversed()
+                        self.tableView.reloadData()
+                        self.updatePlaceholderVisibility()
+                    }
+                }
+            case .failure(_):
+                break
+            }
+        }
+    }
+
+    func fetchPremiumPlanID(completion: @escaping (String?) -> Void) {
+        let plansEndpoint = APIManager.Endpoint(
+            path: "/plans/",
+            method: .GET,
+            parameters: nil,
+            headers: ["Authorization": "Bearer \(UserDefaults.standard.string(forKey: "accessToken") ?? "")"]
+        )
+
+        APIManager.shared.request(endpoint: plansEndpoint, responseType: PlansResponse.self) { result in
+            switch result {
+            case .success(let response):
+                if response.success {
+                    let premiumPlan = response.data.plans.first { $0.name == "Premium" }
+                    completion(premiumPlan?.id)
+                } else {
+                    completion(nil)
+                }
+            case .failure(let error):
+                completion(nil)
+            }
+        }
+    }
+
     func applyGradient(to button: UIButton, colors: [CGColor], startPoint: CGPoint = CGPoint(x: 0, y: 0.5), endPoint: CGPoint = CGPoint(x: 1, y: 0.5)) {
-        // Buscar un gradiente existente en las capas del botón.
         if let gradientLayer = button.layer.sublayers?.first(where: { $0 is CAGradientLayer }) as? CAGradientLayer {
             gradientLayer.frame = button.bounds // Actualizar tamaño del gradiente.
         } else {
-            // Crear un nuevo gradiente si no existe.
             let gradientLayer = CAGradientLayer()
             gradientLayer.colors = colors
             gradientLayer.startPoint = startPoint
@@ -273,13 +293,10 @@ class ShortcutsViewController: UIViewController, UITableViewDataSource, UITableV
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
 
-        // Aplicar gradiente a los botones relevantes.
         applyGradient(to: customButton, colors: [UIColor.systemBlue.cgColor, UIColor.systemPurple.cgColor])
         applyGradient(to: premiumButton, colors: [UIColor.systemBlue.cgColor, UIColor.systemPurple.cgColor])
     }
 
-    // MARK: - Configuración de Diseño
-    /// Configura las restricciones de Auto Layout para los elementos de la vista.
     func setupLayout() {
         
         shortenButton.addTarget(self, action: #selector(handleShortenAction), for: .touchUpInside)
@@ -343,13 +360,10 @@ class ShortcutsViewController: UIViewController, UITableViewDataSource, UITableV
         }
     }
     
-    /// Muestra u oculta el mensaje de placeholder dependiendo de si hay atajos en la lista.
     func updatePlaceholderVisibility() {
         emptyPlaceholderLabel.isHidden = !currentShortcuts.isEmpty
     }
 
-    // MARK: - Acciones
-    /// Cambia entre listas de atajos normales y personalizados según el segmento seleccionado.
     @objc func segmentedControlChanged(_ sender: UISegmentedControl) {
         if sender.selectedSegmentIndex == 0 {
             currentShortcuts = urlList
@@ -357,11 +371,9 @@ class ShortcutsViewController: UIViewController, UITableViewDataSource, UITableV
             currentShortcuts = urlCustomList
         }
     }
-
+    
     @objc func premiumClicked() {
-        let controller = PremiumViewController()
-        controller.delegate = self
-        self.navigationController?.present(controller, animated: true)
+        presentPremiumViewController()
     }
     
     @objc func customUrlClicked() {
@@ -370,9 +382,8 @@ class ShortcutsViewController: UIViewController, UITableViewDataSource, UITableV
         self.navigationController?.pushViewController(controller, animated: true)
     }
     
-    /// Acción que se ejecuta al tocar el botón de perfil
     @objc private func profileButtonTapped() {
-        let controller = ProfileViewController()
+        let controller = ProfileViewController(numURLsRequest: 200)
         controller.delegate = self
         self.navigationController?.pushViewController(controller, animated: true)
     }

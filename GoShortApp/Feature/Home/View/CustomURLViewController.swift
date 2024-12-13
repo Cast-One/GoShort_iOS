@@ -6,20 +6,16 @@
 //
 
 import UIKit
+import SwiftSoup
 
 protocol CustomURLViewControllerDelegate: AnyObject {
-    /// Notifica que se ha generado una nueva URL personalizada.
     func didGenerateCustomURL(controller: CustomURLViewController)
 }
 
-/// Controlador para generar URLs personalizadas con opciones avanzadas como selección de dominio y sufijo.
 class CustomURLViewController: UIViewController, UITextFieldDelegate {
-
-    // MARK: - UI Elements
     
     weak var delegate: CustomURLViewControllerDelegate?
 
-    /// Botón para regresar a la vista anterior.
     let backButton: UIButton = {
         let button = UIButton(type: .system)
         button.setImage(UIImage(systemName: "chevron.backward"), for: .normal)
@@ -30,7 +26,6 @@ class CustomURLViewController: UIViewController, UITextFieldDelegate {
         return button
     }()
     
-    /// Título principal con gradiente.
     let titleLabel: UILabel = {
         let label = UILabel()
         label.text = LocalizableConstants.Labels.titleCustomURL
@@ -40,7 +35,6 @@ class CustomURLViewController: UIViewController, UITextFieldDelegate {
         return label
     }()
     
-    /// Etiqueta para el campo de texto de URL larga.
     let headerLargeURLTextField: UILabel = {
         let label = UILabel()
         label.text = LocalizableConstants.Labels.headerLargeURL
@@ -50,7 +44,6 @@ class CustomURLViewController: UIViewController, UITextFieldDelegate {
         return label
     }()
     
-    /// Campo de texto para ingresar una URL larga.
     let largeURLTextField: UITextField = {
         let textField = UITextField()
         textField.placeholder = LocalizableConstants.Placeholders.largeURL
@@ -62,7 +55,6 @@ class CustomURLViewController: UIViewController, UITextFieldDelegate {
         return textField
     }()
 
-    /// Etiqueta para el campo de texto de nombre personalizado.
     let headerCustomNameTextField: UILabel = {
         let label = UILabel()
         label.text = LocalizableConstants.Labels.headerCustomName
@@ -72,16 +64,15 @@ class CustomURLViewController: UIViewController, UITextFieldDelegate {
         return label
     }()
     
-    /// Campo de texto para ingresar un nombre personalizado.
     let customNameTextField: UITextField = {
         let textField = UITextField()
         textField.placeholder = LocalizableConstants.Placeholders.customName
         textField.borderStyle = .roundedRect
+        textField.isUserInteractionEnabled = false
         textField.translatesAutoresizingMaskIntoConstraints = false
         return textField
     }()
 
-    /// Etiqueta para el selector de dominio.
     let headerDomainStackView: UILabel = {
         let label = UILabel()
         label.text = LocalizableConstants.Labels.headerDomainSelected
@@ -91,7 +82,6 @@ class CustomURLViewController: UIViewController, UITextFieldDelegate {
         return label
     }()
     
-    /// Contenedor para el selector de dominio y el sufijo.
     let domainStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .horizontal
@@ -100,18 +90,7 @@ class CustomURLViewController: UIViewController, UITextFieldDelegate {
         stackView.translatesAutoresizingMaskIntoConstraints = false
         return stackView
     }()
-    
-    /// Campo de texto para seleccionar el dominio.
-    let domainPicker: UITextField = {
-        let textField = UITextField()
-        textField.borderStyle = .roundedRect
-        textField.placeholder = LocalizableConstants.Placeholders.domainPicker
-        textField.translatesAutoresizingMaskIntoConstraints = false
-        textField.clearButtonMode = .never
-        return textField
-    }()
 
-    /// Campo de texto para ingresar un sufijo del dominio.
     let domainSuffixTextField: UITextField = {
         let textField = UITextField()
         textField.placeholder = LocalizableConstants.Placeholders.domainSuffix
@@ -122,7 +101,6 @@ class CustomURLViewController: UIViewController, UITextFieldDelegate {
         return textField
     }()
 
-    /// Botón para generar la URL personalizada.
     let generateButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle(LocalizableConstants.Buttons.generateButtonTitle, for: .normal)
@@ -140,8 +118,6 @@ class CustomURLViewController: UIViewController, UITextFieldDelegate {
 
     private var initialURL: String?
 
-    /// Inicializador personalizado que recibe una URL larga opcional.
-    /// - Parameter url: URL larga opcional para inicializar el campo de texto.
     init(url: String? = nil) {
         self.initialURL = url
         super.init(nibName: nil, bundle: nil)
@@ -150,9 +126,7 @@ class CustomURLViewController: UIViewController, UITextFieldDelegate {
     required init?(coder: NSCoder) {
         super.init(coder: coder)
     }
-    
-    /// MARK: - View Lifecycle
-    
+        
     let domainPickerView = UIPickerView()
     let availableDomains = ["https://go.short/", "https://my.link/"]
     
@@ -164,52 +138,24 @@ class CustomURLViewController: UIViewController, UITextFieldDelegate {
         setupGradientForTitle()
         setupActions()
         
-        setupDomainPicker()
-        domainPicker.inputView = domainPickerView // Asignar el UIPickerView como inputView
-
-        // Poblar el campo de texto con la URL inicial si está disponible
         if let url = initialURL {
             largeURLTextField.text = url
         }
     }
-    
-    
-    private func setupDomainPicker() {
-        domainPickerView.delegate = self
-        domainPickerView.dataSource = self
-        domainPicker.inputView = domainPickerView // Configurar el Picker como teclado para domainPicker
-        domainPicker.addTarget(self, action: #selector(showDomainPicker), for: .touchDown) // Mostrar el PickerView
-    }
-
-    @objc private func showDomainPicker() {
-        domainPicker.becomeFirstResponder() // Hacer que el campo sea el primer responder
-    }
 
     @objc private func backButtonTapped() {
-        // Hace un pop de la vista actual
         navigationController?.popViewController(animated: true)
     }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-
-        // Aplicar gradiente a los botones relevantes.
         applyGradient(to: generateButton, colors: [UIColor.systemBlue.cgColor, UIColor.systemPurple.cgColor])
     }
     
-    /// Ajusta el tamaño de los gradientes en los botones personalizados.
-    /// Configura o actualiza el gradiente de fondo en un botón.
-    /// - Parameters:
-    ///   - button: El botón al que se aplicará el gradiente.
-    ///   - colors: Los colores del gradiente.
-    ///   - startPoint: El punto inicial del gradiente (por defecto, horizontal desde la izquierda).
-    ///   - endPoint: El punto final del gradiente (por defecto, horizontal hacia la derecha).
     func applyGradient(to button: UIButton, colors: [CGColor], startPoint: CGPoint = CGPoint(x: 0, y: 0.5), endPoint: CGPoint = CGPoint(x: 1, y: 0.5)) {
-        // Buscar un gradiente existente en las capas del botón.
         if let gradientLayer = button.layer.sublayers?.first(where: { $0 is CAGradientLayer }) as? CAGradientLayer {
             gradientLayer.frame = button.bounds // Actualizar tamaño del gradiente.
         } else {
-            // Crear un nuevo gradiente si no existe.
             let gradientLayer = CAGradientLayer()
             gradientLayer.colors = colors
             gradientLayer.startPoint = startPoint
@@ -220,9 +166,6 @@ class CustomURLViewController: UIViewController, UITextFieldDelegate {
         }
     }
     
-    // MARK: - Setup
-    
-    /// Agrega subviews a la vista principal
     private func setupSubviews() {
         view.addSubview(titleLabel)
         view.addSubview(headerLargeURLTextField)
@@ -234,25 +177,19 @@ class CustomURLViewController: UIViewController, UITextFieldDelegate {
         view.addSubview(generateButton)
         view.addSubview(backButton)
         
-        domainStackView.addArrangedSubview(domainPicker)
         domainStackView.addArrangedSubview(domainSuffixTextField)
         
         largeURLTextField.delegate = self
-        customNameTextField.delegate = self
-        domainSuffixTextField.delegate = self
     }
 
-    /// Configura las constraints para los elementos de la vista
     private func setupConstraints() {
         NSLayoutConstraint.activate([
-            // Título
             titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
             titleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             
             backButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             backButton.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
             
-            // Large URL TextField
             headerLargeURLTextField.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 20),
             headerLargeURLTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             headerLargeURLTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
@@ -261,7 +198,6 @@ class CustomURLViewController: UIViewController, UITextFieldDelegate {
             largeURLTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             largeURLTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             
-            // Custom Name TextField
             headerCustomNameTextField.topAnchor.constraint(equalTo: largeURLTextField.bottomAnchor, constant: 20),
             headerCustomNameTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             headerCustomNameTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
@@ -270,7 +206,6 @@ class CustomURLViewController: UIViewController, UITextFieldDelegate {
             customNameTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             customNameTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             
-            // Domain Stack View
             headerDomainStackView.topAnchor.constraint(equalTo: customNameTextField.bottomAnchor, constant: 20),
             headerDomainStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             headerDomainStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
@@ -279,10 +214,8 @@ class CustomURLViewController: UIViewController, UITextFieldDelegate {
             domainStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             domainStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             
-            domainPicker.widthAnchor.constraint(equalTo: domainStackView.widthAnchor, multiplier: 0.5),
-            domainSuffixTextField.widthAnchor.constraint(equalTo: domainStackView.widthAnchor, multiplier: 0.5),
+            domainSuffixTextField.widthAnchor.constraint(equalTo: domainStackView.widthAnchor, multiplier: 1.0),
             
-            // Generate Button
             generateButton.topAnchor.constraint(equalTo: domainStackView.bottomAnchor, constant: 30),
             generateButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             generateButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
@@ -290,33 +223,31 @@ class CustomURLViewController: UIViewController, UITextFieldDelegate {
         ])
     }
 
-    /// Configura un gradiente para el título
     private func setupGradientForTitle() {
         if let gradientColor = titleLabel.gradientTextColor(colors: [.systemBlue, .systemPurple], text: "Custom URL", font: UIFont.boldSystemFont(ofSize: 30)) {
             titleLabel.textColor = gradientColor
         }
     }
     
-    /// Configura acciones para el botón
     private func setupActions() {
         generateButton.addTarget(self, action: #selector(handleGenerateButton), for: .touchUpInside)
     }
 
     private func validateAllFields() -> Bool {
-            if largeURLTextField.text?.isEmpty == true || !isValidURL(largeURLTextField.text!) {
-                showToast(message: "La URL ingresada no es válida.")
-                return false
-            }
-            if customNameTextField.text?.isEmpty == true {
-                showToast(message: "El campo 'Custom Name' no puede estar vacío.")
-                return false
-            }
-            if domainSuffixTextField.text?.isEmpty == true || !isValidPath(domainSuffixTextField.text!) {
-                showToast(message: "El campo 'Domain Suffix' no es válido.")
-                return false
-            }
-            return true
+        if largeURLTextField.text?.isEmpty == true || !isValidURL(largeURLTextField.text!) {
+            showToast(message: "La URL ingresada no es válida.")
+            return false
         }
+        if customNameTextField.text?.isEmpty == true {
+            showToast(message: "El campo 'Custom Name' no puede estar vacío.")
+            return false
+        }
+        if domainSuffixTextField.text?.isEmpty == true || !isValidPath(domainSuffixTextField.text!) {
+            showToast(message: "El campo 'Domain Suffix' no es válido.")
+            return false
+        }
+        return true
+    }
 
     private func isValidURL(_ urlString: String) -> Bool {
         guard let url = URL(string: urlString) else { return false }
@@ -330,48 +261,109 @@ class CustomURLViewController: UIViewController, UITextFieldDelegate {
 
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         textField.resignFirstResponder()
+        
+        if textField == largeURLTextField, let longURL = largeURLTextField.text, isValidURL(longURL) {
+            showLoader()
+            fetchTitleFromURL(longURL) { [weak self] title in
+                DispatchQueue.main.async {
+                    self?.hideLoader()
+                    if let title = title, !title.isEmpty {
+                        self?.customNameTextField.text = title
+                    } else {
+                        self?.customNameTextField.text = "Custom URL"
+                    }
+                }
+            }
+        }
         return true
     }
     
-    // MARK: - Actions
-    
-    /// Acción para generar la URL personalizada
     @objc private func handleGenerateButton() {
-        guard validateAllFields() else { return }
-        
-        // Obtener los valores de los campos de texto
-       guard let longURL = largeURLTextField.text,
-             let customName = customNameTextField.text,
-             let domain = domainPicker.text,
-             let suffix = domainSuffixTextField.text else { return }
+        guard let longURL = largeURLTextField.text, !longURL.isEmpty, isValidURL(longURL),
+              let domain = domainSuffixTextField.text  else {
+            showToast(message: "Por favor ingresa datos válidos.")
+            return
+        }
 
-       // Generar la URL personalizada
-       let shortenedURL = "\(domain)\(suffix)"
-       let currentDate = getCurrentDate() // Usar la función para obtener la fecha actual
+        showLoader()
 
-       // Crear un nuevo URLItem
-       let newURLItem = URLItem(
-           title: customName,
-           shortURL: shortenedURL,
-           longURL: longURL,
-           creationDate: currentDate
-       )
+        let completion: (String) -> Void = { [weak self] title in
+            guard let self = self else { return }
+            let customName = title.isEmpty ? "Custom URL" : title
 
-       // Agregar el nuevo URLItem a la lista urlCustomList
-       urlCustomList.append(newURLItem)
+            let requestBody: [String: Any] = [
+                "url": longURL,
+                "domain": domain
+            ]
 
-       // Limpiar los campos de texto después de generar la URL
-       largeURLTextField.text = ""
-       customNameTextField.text = ""
-       domainSuffixTextField.text = ""
-        
-        self.delegate?.didGenerateCustomURL(controller: self)
+            let shortenPlanEndpoint = APIManager.Endpoint(
+                path: "/shorten-plan/",
+                method: .POST,
+                parameters: requestBody,
+                headers: [
+                    "Authorization": "Bearer \(UserDefaults.standard.string(forKey: "accessToken") ?? "")",
+                    "Content-Type": "application/json"
+                ]
+            )
+
+            // Llamada al API
+            APIManager.shared.request(endpoint: shortenPlanEndpoint, responseType: ShortenURLResponse.self) { result in
+                DispatchQueue.main.async {
+                    self.hideLoader()
+                    switch result {
+                    case .success(let response):
+                        if response.success {
+                            self.showToast(message: "URL generada: \(response.data.shortened_url)")
+
+                            self.customNameTextField.text = customName
+                            self.largeURLTextField.text = ""
+                            self.domainSuffixTextField.text = ""
+
+                            self.delegate?.didGenerateCustomURL(controller: self)
+                        } else {
+                            self.showToast(message: "Error: \(response.message)")
+                        }
+                    case .failure(let error):
+                        self.showToast(message: "Error en la generación: \(error.localizedDescription)")
+                    }
+                }
+            }
+        }
+
+        // Validar si ya se autocompletó el título
+        if let customName = customNameTextField.text, !customName.isEmpty, customName != "Custom URL" {
+            completion(customName)
+        } else {
+            fetchTitleFromURL(longURL) { title in
+                completion(title ?? "Custom URL")
+            }
+        }
     }
-    
-    private func getCurrentDate() -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        return formatter.string(from: Date())
+
+    func fetchTitleFromURL(_ urlString: String, completion: @escaping (String?) -> Void) {
+        guard let url = URL(string: urlString) else {
+            completion(nil)
+            return
+        }
+        
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            guard let data = data, error == nil else {
+                completion(nil)
+                return
+            }
+            
+            if let html = String(data: data, encoding: .utf8) {
+                do {
+                    let document = try SwiftSoup.parse(html)
+                    let title = try document.title()
+                    completion(title)
+                } catch {
+                    completion(nil)
+                }
+            } else {
+                completion(nil)
+            }
+        }.resume()
     }
 }
 

@@ -22,10 +22,10 @@ class UserManager {
 
     // Guardar datos del usuario
     func saveUser(user: User) {
-        userDefaults.set(user.name, forKey: userNameKey)
+      /*  userDefaults.set(user.name, forKey: userNameKey)
         userDefaults.set(user.phone, forKey: userPhoneKey)
         userDefaults.set(user.isPremium, forKey: userIsPremiumKey)
-        userDefaults.set(user.urlsCreated, forKey: urlsCreatedKey)
+        userDefaults.set(user.urlsCreated, forKey: urlsCreatedKey)*/
     }
 
     // Obtener los datos del usuario
@@ -36,21 +36,21 @@ class UserManager {
         }
         let isPremium = userDefaults.bool(forKey: userIsPremiumKey)
         let urlsCreated = userDefaults.integer(forKey: urlsCreatedKey)
-        return User(name: name, phone: phone, isPremium: isPremium, urlsCreated: urlsCreated)
+        return nil
     }
 
     // Actualizar el número de URLs creadas
     func incrementURLsCreated() {
         guard var user = getUser() else { return }
-        user.urlsCreated += 1
-        ShortcutManager.shared.incrementShortcutsCount()
+       // user.urlsCreated += 1
+        //ShortcutManager.shared.incrementShortcutsCount()
         saveUser(user: user)
     }
     
     // Activar versión premium al usuario
     func premiumUser() {
         guard var user = getUser() else { return }
-        user.isPremium = true
+       // user.isPremium = true
         saveUser(user: user)
     }
 

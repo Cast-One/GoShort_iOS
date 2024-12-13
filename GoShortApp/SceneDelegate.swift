@@ -21,12 +21,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             let window = UIWindow(windowScene: windowScene)
             
             var controller: UIViewController = WelcomeViewController()
-            if UserManager.shared.getUser() != nil {
+            if UserDefaultsManager.shared.isUserLoggedIn() {
                 controller = ShortcutsViewController()
             }
-
-            let totalShortcuts = ShortcutManager.shared.getShortcutsCount()
-            print("Total de shortcuts generados: \(totalShortcuts)")
 
             window.rootViewController = UINavigationController(rootViewController: controller)
             self.window = window

@@ -6,24 +6,14 @@
 //
 
 import UIKit
+import SwiftSoup
 
-/// Extensión de `ShortcutsViewController` para manejar las funciones relacionadas con la tabla.
 extension ShortcutsViewController {
 
-    /// Devuelve el número de filas en la sección de la tabla.
-    /// - Parameters:
-    ///   - tableView: La instancia de la tabla.
-    ///   - section: La sección de la tabla para la que se solicita el número de filas.
-    /// - Returns: El número de atajos (shortcuts) en la lista actual.
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return currentShortcuts.count
     }
 
-    /// Configura y devuelve la celda para la fila en un índice específico.
-    /// - Parameters:
-    ///   - tableView: La instancia de la tabla.
-    ///   - indexPath: La posición de la celda en la tabla.
-    /// - Returns: Una celda configurada con los datos de un atajo.
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: "ShortcutCell", for: indexPath) as? ShortcutTableViewCell else {
             return UITableViewCell()
@@ -31,56 +21,89 @@ extension ShortcutsViewController {
         
         let shortcut = currentShortcuts[indexPath.row]
         
-        // Configura las acciones para copiar, abrir en navegador y compartir.
         cell.configure(
             index: indexPath.row + 1,
-            name: shortcut.title,
-            url: shortcut.shortURL,
+            name: "Loading...",
+            url: shortcut.shortened_url,
             copyAction: { [weak self] in
-                // Copiar la URL al portapapeles.
-                UIPasteboard.general.string = shortcut.shortURL
+                UIPasteboard.general.string = shortcut.shortened_url
                 self?.showToast(message: LocalizableConstants.Toast.textCopied)
             },
             webAction: {
-                // Abrir la URL en Safari.
-                if let url = URL(string: shortcut.shortURL) {
+                if let url = URL(string: shortcut.shortened_url) {
                     UIApplication.shared.open(url, options: [:], completionHandler: nil)
                 }
             },
             shareAction: { [weak self] in
-                // Compartir la URL usando el ActivityViewController de iOS.
-                let activityVC = UIActivityViewController(activityItems: [shortcut.shortURL], applicationActivities: nil)
+                let activityVC = UIActivityViewController(activityItems: [shortcut.shortened_url], applicationActivities: nil)
                 self?.present(activityVC, animated: true, completion: nil)
             }
         )
-
+        
+        fetchTitleFromURL(shortcut.original_url) { [weak cell] title in
+            DispatchQueue.main.async {
+                guard let title = title else { return }
+                cell?.configure(
+                    index: indexPath.row + 1,
+                    name: title, 
+                    url: shortcut.shortened_url,
+                    copyAction: { [weak self] in
+                        UIPasteboard.general.string = shortcut.shortened_url
+                        self?.showToast(message: LocalizableConstants.Toast.textCopied)
+                    },
+                    webAction: {
+                        if let url = URL(string: shortcut.shortened_url) {
+                            UIApplication.shared.open(url, options: [:], completionHandler: nil)
+                        }
+                    },
+                    shareAction: { [weak self] in
+                        let activityVC = UIActivityViewController(activityItems: [shortcut.shortened_url], applicationActivities: nil)
+                        self?.present(activityVC, animated: true, completion: nil)
+                    }
+                )
+            }
+        }
+        
         return cell
     }
 
-    /// Permite que las filas de la tabla sean editables (por ejemplo, para eliminar elementos).
-    /// - Parameters:
-    ///   - tableView: La instancia de la tabla.
-    ///   - indexPath: La posición de la celda en la tabla.
-    /// - Returns: `true` si la fila puede ser editada, `false` en caso contrario.
     func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
         return true
     }
 
-    /// Maneja la acción de eliminar una fila cuando el usuario desliza hacia la izquierda.
-    /// - Parameters:
-    ///   - tableView: La instancia de la tabla.
-    ///   - editingStyle: El estilo de edición (en este caso, eliminación).
-    ///   - indexPath: La posición de la celda a editar.
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
-            // Primero, elimina el elemento de la lista de atajos.
             currentShortcuts.remove(at: indexPath.row)
             
-            // Luego, recarga la tabla para reflejar los cambios.
             tableView.reloadData()
             showToast(message: LocalizableConstants.Toast.shortCutDeleted)
-            // Actualiza la visibilidad del mensaje de placeholder.
             updatePlaceholderVisibility()
         }
+    }
+    
+    func fetchTitleFromURL(_ urlString: String, completion: @escaping (String?) -> Void) {
+        guard let url = URL(string: urlString) else {
+            completion(nil)
+            return
+        }
+        
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            guard let data = data, error == nil else {
+                completion(nil)
+                return
+            }
+            
+            if let html = String(data: data, encoding: .utf8) {
+                do {
+                    let document = try SwiftSoup.parse(html)
+                    let title = try document.title()
+                    completion(title)
+                } catch {
+                    completion(nil)
+                }
+            } else {
+                completion(nil)
+            }
+        }.resume()
     }
 }

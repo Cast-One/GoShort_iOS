@@ -5,10 +5,12 @@
 //  Created by Uriel C on 25/11/24.
 //
 
+import UIKit
+
 extension ShortcutsViewController: ProfileViewControllerDelegate {
     func didTapAcquirePremium() {
-        let controller = PremiumViewController()
-        controller.delegate = self
-        self.navigationController?.present(controller, animated: true)
+        DispatchQueue.main.async {
+            self.presentPremiumViewController()
+        }
     }
 }

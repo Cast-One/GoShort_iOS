@@ -8,12 +8,8 @@
 import UIKit
 
 extension UIViewController {
-    /// Muestra un mensaje en forma de toast con padding.
-    /// - Parameters:
-    ///   - message: El mensaje a mostrar.
-    ///   - duration: Duración del mensaje en segundos.
+    
     func showToast(message: String, duration: TimeInterval = 2.0) {
-        // Etiqueta personalizada con padding
         class PaddedLabel: UILabel {
             var padding: UIEdgeInsets = UIEdgeInsets(top: 10, left: 15, bottom: 10, right: 15)
 

@@ -7,22 +7,25 @@
 
 import UIKit
 
-/// Protocolo para manejar acciones desde el `ProfileViewController`.
 protocol ProfileViewControllerDelegate: AnyObject {
-    /// Notifica al delegado cuando el usuario desea adquirir el plan Premium.
     func didTapAcquirePremium()
 }
 
-/// Controlador que gestiona la pantalla del perfil del usuario.
-/// Muestra el nombre, estado de cuenta, cantidad de URLs generadas, y permite adquirir Premium o cerrar sesión.
 class ProfileViewController: UIViewController {
 
-    // MARK: - Delegado
     weak var delegate: ProfileViewControllerDelegate?
 
-    // MARK: - UI Elements
+    let numURLsRequest: Int
 
-    /// Botón para regresar a la pantalla anterior.
+    init(numURLsRequest: Int) {
+        self.numURLsRequest = numURLsRequest
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     let backButton: UIButton = {
         let button = UIButton(type: .system)
         button.setImage(UIImage(systemName: "chevron.backward"), for: .normal)
@@ -33,7 +36,6 @@ class ProfileViewController: UIViewController {
         return button
     }()
 
-    /// Etiqueta que muestra el nombre del usuario.
     let nameLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.boldSystemFont(ofSize: 20)
@@ -42,7 +44,6 @@ class ProfileViewController: UIViewController {
         return label
     }()
 
-    /// Etiqueta que muestra el nombre de usuario con formato decorativo.
     let usernameLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 14)
@@ -52,7 +53,6 @@ class ProfileViewController: UIViewController {
         return label
     }()
 
-    /// Vista contenedora para mostrar la cantidad de URLs generadas.
     let urlsGeneratedView: UIView = {
         let view = UIView()
         view.layer.cornerRadius = 10
@@ -62,7 +62,6 @@ class ProfileViewController: UIViewController {
         return view
     }()
 
-    /// Etiqueta que muestra el texto "URLs generadas".
     let urlsGeneratedLabel: UILabel = {
         let label = UILabel()
         label.text = LocalizableConstants.Profile.urls_generated
@@ -72,7 +71,6 @@ class ProfileViewController: UIViewController {
         return label
     }()
 
-    /// Etiqueta que muestra la cantidad de URLs generadas.
     let urlsGeneratedCountLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.boldSystemFont(ofSize: 16)
@@ -81,7 +79,6 @@ class ProfileViewController: UIViewController {
         return label
     }()
 
-    /// Botón para adquirir el plan Premium.
     let premiumButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle(LocalizableConstants.Profile.acquire_premium, for: .normal)
@@ -98,7 +95,6 @@ class ProfileViewController: UIViewController {
         return button
     }()
 
-    /// Etiqueta que muestra el estado Premium del usuario.
     let premiumStatusLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.boldSystemFont(ofSize: 14)
@@ -107,7 +103,6 @@ class ProfileViewController: UIViewController {
         return label
     }()
 
-    /// Botón para cerrar sesión y regresar a la pantalla de bienvenida.
     let logoutButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle(LocalizableConstants.Profile.logout, for: .normal)
@@ -120,9 +115,6 @@ class ProfileViewController: UIViewController {
         return button
     }()
 
-    // MARK: - View Lifecycle
-
-    /// Configuración inicial del controlador.
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
@@ -131,7 +123,6 @@ class ProfileViewController: UIViewController {
         loadUserData()
     }
 
-    /// Configura los subviews en la vista principal.
     private func setupSubviews() {
         view.addSubview(nameLabel)
         view.addSubview(backButton)
@@ -144,16 +135,12 @@ class ProfileViewController: UIViewController {
         view.addSubview(logoutButton)
     }
 
-    /// Aplica gradientes y actualiza etiquetas después de configurar el layout.
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
 
-        // Aplicar gradiente al botón Premium.
         applyGradient(to: premiumButton, colors: [UIColor.systemBlue.cgColor, UIColor.systemPurple.cgColor])
 
-        // Aplicar gradiente al texto del estado Premium.
-        let user = UserManager.shared.getUser()
-        let statusText = user?.isPremium == true
+        let statusText = UserDefaultsManager.shared.isPremiumUser() == true
             ? LocalizableConstants.Profile.premium_status_yes
             : LocalizableConstants.Profile.premium_status_no
         applyGradientToLabel(
@@ -163,10 +150,7 @@ class ProfileViewController: UIViewController {
             font: UIFont.systemFont(ofSize: 14)
         )
     }
-
-    // MARK: - Métodos Auxiliares
-
-    /// Aplica un gradiente a un UIButton.
+    
     func applyGradient(to button: UIButton, colors: [CGColor], startPoint: CGPoint = CGPoint(x: 0, y: 0.5), endPoint: CGPoint = CGPoint(x: 1, y: 0.5)) {
         if let gradientLayer = button.layer.sublayers?.first(where: { $0 is CAGradientLayer }) as? CAGradientLayer {
             gradientLayer.frame = button.bounds
@@ -181,16 +165,13 @@ class ProfileViewController: UIViewController {
         }
     }
 
-    /// Aplica un gradiente a todo el texto de un UILabel.
     func applyGradientToLabel(label: UILabel, text: String, colors: [UIColor], font: UIFont) {
-        // Establecer texto y fuente primero para calcular correctamente el tamaño.
         label.text = text
         label.font = font
-        label.sizeToFit() // Ajustar tamaño de la etiqueta antes de crear el gradiente.
+        label.sizeToFit()
 
-        guard label.bounds.size != .zero else { return } // Evitar contextos con tamaño inválido.
+        guard label.bounds.size != .zero else { return }
 
-        // Crear un renderer gráfico basado en el tamaño de la etiqueta.
         let renderer = UIGraphicsImageRenderer(size: label.bounds.size)
         let gradientImage = renderer.image { context in
             let gradientLayer = CAGradientLayer()
@@ -199,7 +180,6 @@ class ProfileViewController: UIViewController {
             gradientLayer.render(in: context.cgContext)
         }
 
-        // Crear un atributo estilizado con el gradiente como color del texto.
         let textAttributes: [NSAttributedString.Key: Any] = [
             .foregroundColor: UIColor(patternImage: gradientImage),
             .font: font
@@ -207,9 +187,7 @@ class ProfileViewController: UIViewController {
         label.attributedText = NSAttributedString(string: text, attributes: textAttributes)
     }
 
-    /// Configura las restricciones de Auto Layout.
     private func setupConstraints() {
-        guard let user = UserManager.shared.getUser() else { return }
         NSLayoutConstraint.activate([
             nameLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
             nameLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
@@ -232,7 +210,7 @@ class ProfileViewController: UIViewController {
             urlsGeneratedCountLabel.centerYAnchor.constraint(equalTo: urlsGeneratedView.centerYAnchor),
         ])
 
-        if user.isPremium {
+        if UserDefaultsManager.shared.isPremiumUser() {
             premiumButton.isHidden = true
             premiumStatusLabel.isHidden = false
 
@@ -264,32 +242,31 @@ class ProfileViewController: UIViewController {
         }
     }
 
-    /// Carga los datos del usuario y actualiza las etiquetas.
     private func loadUserData() {
-        guard let user = UserManager.shared.getUser() else { return }
-        nameLabel.text = user.name
-        usernameLabel.text = "@\(user.name)"
-        urlsGeneratedCountLabel.text = "\(user.urlsCreated)"
+        let user = UserDefaultsManager.shared.getUser()
+        nameLabel.text =  "User ID: \(String(user.username.prefix(6)))"
+        usernameLabel.text = user.email
+        urlsGeneratedCountLabel.text = "\(numURLsRequest)"
     }
 
-    // MARK: - Actions
-
-    /// Navega al delegado para gestionar la adquisición del plan Premium.
     @objc private func acquirePremiumTapped() {
         delegate?.didTapAcquirePremium()
         navigationController?.popViewController(animated: true)
     }
 
-    /// Borra los datos del usuario y navega a la pantalla de bienvenida.
     @objc private func logoutTapped() {
         UserManager.shared.clearUser()
-        let welcomeVC = WelcomeViewController()
-        let navigationController = UINavigationController(rootViewController: welcomeVC)
-        UIApplication.shared.windows.first?.rootViewController = navigationController
-        UIApplication.shared.windows.first?.makeKeyAndVisible()
+        UserDefaultsManager.shared.clearAllData()
+
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first {
+            let welcomeVC = WelcomeViewController()
+            let navigationController = UINavigationController(rootViewController: welcomeVC)
+            window.rootViewController = navigationController
+            window.makeKeyAndVisible()
+        }
     }
 
-    /// Regresa a la pantalla anterior.
     @objc private func backButtonTapped() {
         navigationController?.popViewController(animated: true)
     }

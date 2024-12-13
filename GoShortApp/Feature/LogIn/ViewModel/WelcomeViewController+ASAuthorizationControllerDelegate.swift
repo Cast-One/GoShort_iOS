@@ -7,25 +7,22 @@
 
 import UIKit
 import AuthenticationServices
+ 
 
-// MARK: - ASAuthorizationControllerDelegate
-
-extension WelcomeViewController: ASAuthorizationControllerDelegate {
+extension WelcomeViewController {
     func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
         if let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential {
-            let fullName = appleIDCredential.fullName
+            let userID = appleIDCredential.user
+            var email = appleIDCredential.email
+            
+            if email == nil, let identityTokenData = appleIDCredential.identityToken {
+                email = decodeJWTForEmail(token: identityTokenData) ?? generateFakeEmail(for: userID)
+            }
 
-            // Generar un UUID corto si el nombre es nulo
-            let name = fullName?.givenName ?? String(UUID().uuidString.prefix(16))
-            ShortcutManager.shared.resetShortcutsCount()
-            ShortcutManager.shared.incrementShortcutsCountBy(times: 19)
-            let user = User(name: name, phone: "", isPremium: false, urlsCreated: 19)
-
-            // Guardar el usuario en el UserManager
-            UserManager.shared.saveUser(user: user)
-
-            // Navegar al ShortcutsViewController
-            self.navigationController?.viewControllers = [ShortcutsViewController()]
+            let username = userID
+            let password = "12345678"
+            
+            registerOrLogin(username: username, email: email ?? "", password: password)
         }
     }
 
@@ -34,8 +31,26 @@ extension WelcomeViewController: ASAuthorizationControllerDelegate {
     }
 }
 
-
-// MARK: - ASAuthorizationControllerPresentationContextProviding
+extension WelcomeViewController {
+    private func decodeJWTForEmail(token: Data) -> String? {
+        guard let jwt = String(data: token, encoding: .utf8) else { return nil }
+        let segments = jwt.split(separator: ".")
+        guard segments.count == 3 else { return nil } // Un JWT tiene 3 partes: header, payload, signature
+        
+        let payloadSegment = segments[1]
+        let paddedSegment = payloadSegment.padding(toLength: ((payloadSegment.count + 3) / 4) * 4, withPad: "=", startingAt: 0)
+        guard let payloadData = Data(base64Encoded: paddedSegment),
+              let payloadJSON = try? JSONSerialization.jsonObject(with: payloadData, options: []) as? [String: Any] else {
+            return nil
+        }
+        
+        return payloadJSON["email"] as? String
+    }
+    
+    private func generateFakeEmail(for userID: String) -> String {
+        return "user_\(userID)@goshrtapp.com"
+    }
+}
 
 extension WelcomeViewController: ASAuthorizationControllerPresentationContextProviding {
     func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
