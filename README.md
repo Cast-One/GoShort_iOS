@@ -70,10 +70,3 @@ Actualmente, se identificaron los siguientes puntos a mejorar:
 2. Abrir el archivo `GoShort.xcodeproj` en Xcode.
 3. Configurar las dependencias necesarias (e.g., CocoaPods si aplica).
 4. Ejecutar la aplicación en un simulador o dispositivo físico.
-
-## Contribuciones
-Contribuciones son bienvenidas. Por favor, abre un issue o un pull request para discutir cambios.
-
-## Licencia
-Este proyecto está bajo la Licencia MIT. Consulta el archivo LICENSE para más detalles.
-
