@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  database:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: uri
+      POSTGRES_PASSWORD: 123
+      POSTGRES_DB: testing
+    ports:
+      - "9999:5432"
+  app:
+    build:
+      context: .
+      dockerfile: deployments/Dockerfile.deploy
+    image: short-links-api:latest
+    container_name: short-links-api
+    ports:
+      - "8080:8080"
+    env_file:
+      - .envs/.env
